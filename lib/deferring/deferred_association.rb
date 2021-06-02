@@ -25,7 +25,7 @@ module Deferring
     end
     alias_method :pretty_inspect, :inspect
 
-    delegate :to_s, :to_a, :inspect, :==, # methods undefined by SimpleDelegator
+    delegate :to_s, :to_a, :to_ary, :inspect, :==, # methods undefined by SimpleDelegator
              :as_json, to: :objects
 
     def each(&block)
