@@ -14,7 +14,7 @@ module Deferring
     autosave = options.fetch(:autosave, true)
     validate = options.fetch(:validate, true)
 
-    has_and_belongs_to_many(*args, options)
+    has_and_belongs_to_many(*args, **options)
     generate_deferred_association_methods(
       args.first.to_s,
       listeners,
@@ -34,7 +34,7 @@ module Deferring
     autosave = options.fetch(:autosave, true)
     validate = options.fetch(:validate, true)
 
-    has_many(*args, options)
+    has_many(*args, **options)
     generate_deferred_association_methods(
       args.first.to_s,
       listeners,
@@ -238,10 +238,21 @@ module Deferring
         unless record.valid?
           valid = false
           if autosave
-            record.errors.each do |attribute, message|
-              attribute = "#{association_name}.#{attribute}"
-              errors[attribute] << message
-              errors[attribute].uniq!
+            if ActiveRecord::VERSION::MAJOR == 6 && ActiveRecord::VERSION::MINOR == 1
+              record.errors.group_by_attribute.each do |attribute, errors|
+                errors.each do |error|
+                  self.errors.import(
+                    error,
+                    attribute: "#{association_name}.#{attribute}"
+                  )
+                end
+              end
+            else
+              record.errors.each do |attribute, message|
+                attribute = "#{association_name}.#{attribute}"
+                errors[attribute] << message
+                errors[attribute].uniq!
+              end
             end
           else
             errors.add(association_name)
